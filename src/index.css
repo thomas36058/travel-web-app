@@ -142,13 +142,6 @@
 
 /* Custom Components */
 @layer components {
-  .stat-card {
-    @apply bg-card rounded-2xl p-6 transition-all duration-300 shadow-card;
-  }
-  .stat-card:hover {
-    @apply shadow-card-hover -translate-y-0.5;
-  }
-  
   /* v4 handles opacity on variables automatically if defined with hsl() in @theme */
   .stat-icon-terracotta { @apply bg-stat-terracotta/15 text-stat-terracotta; }
   .stat-icon-sage { @apply bg-stat-sage/15 text-stat-sage; }
