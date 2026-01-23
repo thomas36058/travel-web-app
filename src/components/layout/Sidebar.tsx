@@ -2,13 +2,15 @@ import {
   LayoutDashboard,
   MapPin,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Plane
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { NavLink } from '../NavLink';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+  { icon: Plane, label: 'Viagens', path: '/trips' },
 ];
 
 interface SidebarProps {

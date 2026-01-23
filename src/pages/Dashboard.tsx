@@ -61,15 +61,9 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* <div className="lg:col-span-2">
-          <WorldMap visitedCountries={visitedCountries} />
-        </div> */}
-
-        <div className='col-span'>
-          <ExpenseChart trips={mockPlannedTrips} />
-        </div>
+      {/* Expense Chart */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <ExpenseChart trips={mockPlannedTrips} />
       </div>
 
       {/* Bottom Grid */}

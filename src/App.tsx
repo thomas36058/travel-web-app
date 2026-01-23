@@ -1,12 +1,16 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { MainLayout } from "./components/layout/MainLayout";
 import Index from "./pages/Index";
+import Trips from "./pages/Trips";
+import TripDetail from "./pages/TripDetail";
 
 const App = () => (
   <BrowserRouter>
     <MainLayout>
       <Routes>
         <Route path="/" element={<Index />} />
+        <Route path="/trips" element={<Trips />} />
+        <Route path="/trips/:id" element={<TripDetail />} />
       </Routes>
     </MainLayout>
   </BrowserRouter>
