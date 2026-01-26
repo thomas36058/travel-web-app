@@ -1,115 +1,158 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import {
+  PieChart,
+  Pie,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+} from 'recharts';
+
 import type { PlannedTrip } from '../../types/travel';
-import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import type { ReactNode } from 'react';
+import { calculateExpenseData } from '../../lib/utils';
 
 interface ExpenseChartProps {
   trips: PlannedTrip[];
 }
 
-const COLORS = {
-  accommodation: 'hsl(168, 84%, 35%)',
-  transportation: 'hsl(210, 90%, 55%)',
-  attractions: 'hsl(25, 95%, 55%)',
-  food: 'hsl(270, 70%, 60%)',
-  other: 'hsl(150, 70%, 45%)',
-};
-
-const LABELS = {
+const CATEGORY_LABELS = {
   accommodation: 'Hospedagem',
   transportation: 'Transporte',
   attractions: 'Atrações',
   food: 'Alimentação',
   other: 'Outros',
-};
+} as const;
+
+const CATEGORY_COLORS = {
+  accommodation: 'var(--color-stat-sage)',
+  transportation: 'var(--color-stat-navy)',
+  attractions: 'var(--color-stat-amber)',
+  food: 'var(--color-stat-terracotta)',
+  other: 'var(--color-muted-foreground)',
+} as const;
+
+type Category = keyof typeof CATEGORY_LABELS;
+
+interface ChartDataItem {
+  category: Category;
+  value: number;
+  fill: string;
+}
+
+const currency = new Intl.NumberFormat('pt-PT', {
+  style: 'currency',
+  currency: 'EUR',
+});
 
 export default function ExpenseChart({ trips }: ExpenseChartProps) {
-  // Aggregate all expenses by category
-  const expensesByCategory = trips.reduce((acc, trip) => {
-    trip.expenses.forEach(expense => {
-      acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-    });
-    return acc;
-  }, {} as Record<string, number>);
+  const data: ChartDataItem[] = useMemo(() => {
+    return calculateExpenseData(trips).map(item => ({
+      category: item.category as Category,
+      value: item.value,
+      fill: CATEGORY_COLORS[item.category as Category],
+    }));
+  }, [trips]);
 
-  const data = Object.entries(expensesByCategory).map(([category, value]) => ({
-    name: LABELS[category as keyof typeof LABELS] || category,
-    value,
-    color: COLORS[category as keyof typeof COLORS] || '#888',
-  }));
+  const total = data.reduce((sum, item) => sum + item.value, 0);
 
-  const totalExpenses = data.reduce((sum, item) => sum + item.value, 0);
-
-  if (data.length === 0) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.4 }}
-        className="bg-card rounded-2xl p-6 transition-all duration-300 shadow-card hover:shadow-card-hover hover:-translate-y-0.5"
-      >
-        <h3 className="mb-4 font-display text-lg font-semibold text-foreground">
-          Gastos por Categoria
-        </h3>
-        <p className="py-12 text-center text-muted-foreground">
-          Nenhum gasto registrado
-        </p>
-      </motion.div>
-    );
-  }
+  if (!data.length) return <EmptyState />;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.6, duration: 0.4 }}
-      className="bg-card rounded-2xl p-6 transition-all duration-300 shadow-card hover:shadow-card-hover hover:-translate-y-0.5"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="bg-card rounded-2xl p-6 shadow-card"
     >
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="font-display text-lg font-semibold text-foreground">
-          Gastos por Categoria
-        </h3>
-        <span className="font-display text-2xl font-bold text-primary">
-          €{totalExpenses.toLocaleString()}
-        </span>
-      </div>
+      <header className="mb-6 flex justify-between items-end">
+        <div>
+          <h3 className="text-lg font-semibold">Gastos por Categoria</h3>
+          <p className="text-sm text-muted-foreground">
+            Distribuição total de custos
+          </p>
+        </div>
 
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
+        <div className="text-right">
+          <span className="block text-xs uppercase text-muted-foreground">
+            Total
+          </span>
+          <span className="text-2xl font-bold text-primary">
+            {currency.format(total)}
+          </span>
+        </div>
+      </header>
+
+      <div className="h-72">
+        <ResponsiveContainer>
           <PieChart>
             <Pie
               data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={50}
-              outerRadius={80}
-              paddingAngle={4}
               dataKey="value"
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
+              nameKey="category"
+              innerRadius={60}
+              outerRadius={90}
+              paddingAngle={5}
+            />
+
             <Tooltip
-              formatter={(value: number | undefined) => value ? `€${value.toLocaleString()}` : '€0'}
-              contentStyle={{
-                background: 'hsl(var(--card))',
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '0.75rem',
-                boxShadow: 'var(--shadow-card)',
+              cursor={{ fill: 'transparent' }}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+
+                const { category, value } = payload[0].payload as ChartDataItem;
+
+                return (
+                  <div className="bg-popover border p-3 rounded-xl shadow">
+                    <p className="text-xs uppercase text-muted-foreground">
+                      {CATEGORY_LABELS[category]}
+                    </p>
+                    <p className="font-bold">
+                      {currency.format(value)}
+                    </p>
+                  </div>
+                );
               }}
             />
+
             <Legend
               verticalAlign="bottom"
-              iconType="circle"
-              iconSize={8}
-              formatter={(value: ReactNode) => (
-                <span className="text-sm text-muted-foreground">{value}</span>
+              content={({ payload }) => (
+                <ul className="flex flex-wrap justify-center gap-4 mt-6">
+                  {payload?.map(entry => {
+                    if (typeof entry.value !== 'string') return null;
+                    const category = entry.value as Category;
+
+                    return (
+                      <li
+                        key={category}
+                        className="flex items-center gap-2 text-xs"
+                      >
+                        <span
+                          className="h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: entry.color }}
+                        />
+                        {CATEGORY_LABELS[category]}
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             />
           </PieChart>
         </ResponsiveContainer>
       </div>
     </motion.div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="bg-card rounded-2xl p-6 border border-dashed flex flex-col items-center text-center">
+      <span className="text-2xl mb-2">📊</span>
+      <h3 className="font-semibold">Sem dados de gastos</h3>
+      <p className="text-sm text-muted-foreground">
+        Adicione despesas às viagens para visualizar o gráfico.
+      </p>
+    </div>
   );
 }
