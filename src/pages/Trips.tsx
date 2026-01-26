@@ -1,9 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Plus, Plane, Calendar, MapPin, Wallet, ChevronRight, Filter } from 'lucide-react';
+import { Plus, Plane, Filter } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
@@ -12,18 +10,7 @@ import { Input } from '../components/ui/input';
 import { useToast } from '../hooks/use-toast';
 import { mockPlannedTrips } from '../data/mockData';
 import type { PlannedTrip } from '../types/travel';
-
-const statusColors = {
-  planning: 'bg-accent text-accent-foreground',
-  booked: 'bg-primary/10 text-primary',
-  completed: 'bg-muted text-muted-foreground',
-};
-
-const statusLabels = {
-  planning: 'Planejando',
-  booked: 'Confirmada',
-  completed: 'Concluída',
-};
+import TripCard from '../components/pages/TripCard';
 
 export default function Trips() {
   const [trips, setTrips] = useState<PlannedTrip[]>(mockPlannedTrips);
@@ -78,14 +65,22 @@ export default function Trips() {
     ? trips 
     : trips.filter(t => t.status === filter);
 
-  const totalBudget = trips.reduce((sum, t) => sum + t.budget, 0);
-  const totalExpenses = trips.reduce((sum, t) => 
-    sum + t.expenses.reduce((es, e) => es + e.amount, 0), 0
-  );
+  const summary = useMemo(() => {
+    const totalBudget = trips.reduce((s, t) => s + t.budget, 0);
+    const totalExpenses = trips.reduce(
+      (s, t) => s + t.expenses.reduce((es, e) => es + e.amount, 0),
+      0
+    );
+
+    return {
+      totalBudget,
+      totalExpenses,
+      available: totalBudget - totalExpenses,
+    };
+  }, [trips]);
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -100,7 +95,7 @@ export default function Trips() {
               Minhas Viagens
             </h1>
             <p className="text-muted-foreground">
-              {trips.length} viagens • €{totalBudget.toLocaleString()} orçamento
+              {trips.length} viagens • €{summary.totalBudget.toLocaleString()} orçamento
             </p>
           </div>
         </div>
@@ -109,8 +104,10 @@ export default function Trips() {
           <Select value={filter} onValueChange={(v: typeof filter | null) => { if(!v) return; setFilter(v) }}>
             <SelectTrigger className="w-40">
               <Filter className="mr-2 h-4 w-4" />
+
               <SelectValue />
             </SelectTrigger>
+
             <SelectContent>
               <SelectItem value="all">Todas</SelectItem>
               <SelectItem value="planning">Planejando</SelectItem>
@@ -126,10 +123,12 @@ export default function Trips() {
                 Nova Viagem
               </Button>
             </DialogTrigger>
+
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle className="font-display">Nova Viagem</DialogTitle>
               </DialogHeader>
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -142,6 +141,7 @@ export default function Trips() {
                       required
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="country">País</Label>
                     <Input
@@ -153,6 +153,7 @@ export default function Trips() {
                     />
                   </div>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="imageUrl">URL da imagem</Label>
                   <Input
@@ -162,6 +163,7 @@ export default function Trips() {
                     placeholder="https://..."
                   />
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="startDate">Data início</Label>
@@ -173,6 +175,7 @@ export default function Trips() {
                       required
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="endDate">Data fim</Label>
                     <Input
@@ -184,6 +187,7 @@ export default function Trips() {
                     />
                   </div>
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="budget">Orçamento (€)</Label>
@@ -195,6 +199,7 @@ export default function Trips() {
                       placeholder="2000"
                     />
                   </div>
+                  
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
                     <Select
@@ -215,10 +220,12 @@ export default function Trips() {
                     </Select>
                   </div>
                 </div>
+
                 <div className="flex justify-end gap-3 pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                     Cancelar
                   </Button>
+
                   <Button type="submit">Criar Viagem</Button>
                 </div>
               </form>
@@ -227,121 +234,52 @@ export default function Trips() {
         </div>
       </motion.div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="stat-card"
+          className="bg-card rounded-2xl p-6 transition-all duration-300 shadow-card"
         >
           <p className="text-sm text-muted-foreground">Orçamento Total</p>
+
           <p className="mt-1 font-display text-3xl font-bold text-foreground">
-            €{totalBudget.toLocaleString()}
+            €{summary.totalBudget.toLocaleString()}
           </p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="stat-card"
+          className="bg-card rounded-2xl p-6 transition-all duration-300 shadow-card"
         >
           <p className="text-sm text-muted-foreground">Gastos Totais</p>
+
           <p className="mt-1 font-display text-3xl font-bold text-primary">
-            €{totalExpenses.toLocaleString()}
+            €{summary.totalExpenses.toLocaleString()}
           </p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="stat-card"
+          className="bg-card rounded-2xl p-6 transition-all duration-300 shadow-card"
         >
           <p className="text-sm text-muted-foreground">Disponível</p>
+
           <p className="mt-1 font-display text-3xl font-bold text-stat-green">
-            €{(totalBudget - totalExpenses).toLocaleString()}
+            €{(summary.totalBudget - summary.totalExpenses).toLocaleString()}
           </p>
         </motion.div>
       </div>
 
-      {/* Trips Grid */}
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <AnimatePresence mode="popLayout">
-          {filteredTrips.map((trip, index) => (
-            <motion.div
+          {filteredTrips.map((trip) => (
+            <TripCard
               key={trip.id}
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ delay: index * 0.05 }}
+              trip={trip}
               onClick={() => navigate(`/trips/${trip.id}`)}
-              className="group stat-card cursor-pointer p-0 transition-all hover:shadow-card-hover"
-            >
-              <div className="flex flex-col sm:flex-row">
-                {/* Image */}
-                <div className="relative h-48 overflow-hidden sm:h-auto sm:w-64">
-                  <img
-                    src={trip.imageUrl}
-                    alt={trip.destination}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-medium ${statusColors[trip.status]}`}>
-                    {statusLabels[trip.status]}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="flex flex-1 flex-col justify-between p-5">
-                  <div>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-display text-xl font-semibold text-foreground">
-                          {trip.destination}
-                        </h3>
-                        <div className="mt-1 flex items-center gap-1 text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span>{trip.country}</span>
-                        </div>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap items-center gap-4">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>
-                          {format(trip.startDate, "dd MMM", { locale: ptBR })} - {format(trip.endDate, "dd MMM yyyy", { locale: ptBR })}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Wallet className="h-4 w-4" />
-                        <span>€{trip.budget.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Expenses Preview */}
-                  {trip.expenses.length > 0 && (
-                    <div className="mt-4 flex items-center gap-2">
-                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all"
-                          style={{
-                            width: `${Math.min(
-                              (trip.expenses.reduce((s, e) => s + e.amount, 0) / trip.budget) * 100,
-                              100
-                            )}%`,
-                          }}
-                        />
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        €{trip.expenses.reduce((s, e) => s + e.amount, 0).toLocaleString()} gasto
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
+            />
           ))}
         </AnimatePresence>
 

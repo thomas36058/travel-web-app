@@ -9,7 +9,6 @@ import WishlistPreview from '../components/dashboard/WishlistPreview';
 export default function Dashboard() {
   return (
     <div className="space-y-8">
-      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -25,48 +24,41 @@ export default function Dashboard() {
         </div>
       </motion.div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total de Viagens"
           value={mockStats.totalTrips}
           subtitle="Desde 2020"
           icon={<Plane className="h-6 w-6" />}
-          iconVariant="terracotta"
-          delay={0.1}
+          variant="terracotta"
         />
         <StatCard
           title="Países Visitados"
           value={mockStats.countriesVisited}
           subtitle="+2 este ano"
           icon={<Globe className="h-6 w-6" />}
-          iconVariant="sage"
-          delay={0.15}
+          variant="sage"
         />
         <StatCard
           title="Orçamento Total"
           value={`€${mockStats.totalBudget.toLocaleString()}`}
           subtitle="Planejado"
           icon={<Wallet className="h-6 w-6" />}
-          iconVariant="amber"
-          delay={0.2}
+          variant="amber"
         />
         <StatCard
           title="Próximas Viagens"
           value={mockStats.upcomingTrips}
           subtitle="Confirmadas"
           icon={<Calendar className="h-6 w-6" />}
-          iconVariant="navy"
-          delay={0.25}
+          variant="navy"
         />
       </div>
 
-      {/* Expense Chart */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ExpenseChart trips={mockPlannedTrips} />
       </div>
 
-      {/* Bottom Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <UpcomingTrips trips={mockPlannedTrips} />
         <WishlistPreview destinations={mockDestinations} />

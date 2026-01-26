@@ -19,3 +19,11 @@ export const calculateExpenseData = (trips: PlannedTrip[]) => {
     value,
   }));
 };
+
+export function getTripExpenses(trip: PlannedTrip) {
+  return trip.expenses.reduce((s, e) => s + e.amount, 0);
+}
+
+export function getExpensePercent(trip: PlannedTrip) {
+  return Math.min((getTripExpenses(trip) / trip.budget) * 100, 100);
+}

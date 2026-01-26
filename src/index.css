@@ -97,39 +97,6 @@
     --stat-navy: 217 33% 35%;
   }
 
-  .dark {
-    --background: 217 33% 11%;
-    --foreground: 37 38% 96%;
-    --card: 217 33% 14%;
-    --card-foreground: 37 38% 96%;
-    --popover: 217 33% 14%;
-    --popover-foreground: 37 38% 96%;
-    --primary: 9 74% 60%;
-    --primary-foreground: 217 33% 11%;
-    --secondary: 140 14% 45%;
-    --secondary-foreground: 37 38% 96%;
-    --muted: 217 25% 20%;
-    --muted-foreground: 37 15% 65%;
-    --accent: 29 87% 60%;
-    --accent-foreground: 217 33% 11%;
-    --destructive: 0 72% 45%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 217 25% 22%;
-    --input: 217 25% 22%;
-    --ring: 9 74% 60%;
-    --sidebar-background: 217 33% 13%;
-    --sidebar-foreground: 37 38% 96%;
-    --sidebar-primary: 9 74% 60%;
-    --sidebar-primary-foreground: 217 33% 11%;
-    --sidebar-accent: 217 25% 18%;
-    --sidebar-accent-foreground: 37 38% 96%;
-    --sidebar-border: 217 25% 20%;
-    --stat-terracotta: 9 74% 60%;
-    --stat-sage: 140 14% 50%;
-    --stat-amber: 29 87% 60%;
-    --stat-navy: 37 38% 70%;
-  }
-
   * { @apply border-border; }
 
   html { scroll-behavior: smooth; }
@@ -145,7 +112,6 @@
 
 /* Custom Components */
 @layer components {
-  /* v4 handles opacity on variables automatically if defined with hsl() in @theme */
   .stat-icon-terracotta { @apply bg-stat-terracotta/15 text-stat-terracotta; }
   .stat-icon-sage { @apply bg-stat-sage/15 text-stat-sage; }
   .stat-icon-amber { @apply bg-stat-amber/15 text-stat-amber; }
