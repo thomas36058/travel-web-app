@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion';
-import { Heart, ArrowRight, Star } from 'lucide-react';
+import { useMemo, memo } from 'react';
+import { motion, type Variants } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Destination } from '../../types/travel';
 import { Button } from '../ui/button';
@@ -8,63 +9,110 @@ interface WishlistPreviewProps {
   destinations: Destination[];
 }
 
-const priorityColors = {
-  high: 'text-destructive',
-  medium: 'text-stat-orange',
-  low: 'text-muted-foreground',
+const containerVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { staggerChildren: 0.08, delayChildren: 0.4 }
+  }
+};
+
+const cardVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } }
 };
 
 export default function WishlistPreview({ destinations }: WishlistPreviewProps) {
   const navigate = useNavigate();
-  const topDestinations = destinations.slice(0, 4);
+
+  const topDestinations = useMemo(() => destinations.slice(0, 4), [destinations]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5, duration: 0.4 }}
-      className="bg-card rounded-2xl p-6 transition-all duration-300 shadow-card hover:shadow-card-hover hover:-translate-y-0.5"
+    <motion.section
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="bg-card rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all"
     >
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Heart className="h-5 w-5 text-primary" />
-          <h3 className="font-display text-lg font-semibold text-foreground">
+      <Header onNavigate={() => navigate('/wishlist')} />
+
+      <div className="grid grid-cols-2 gap-4">
+        {topDestinations.length === 0 ? (
+          <EmptyState />
+        ) : (
+          topDestinations.map((dest) => (
+            <DestinationCard 
+              key={dest.id} 
+              destination={dest} 
+              onClick={() => navigate(`/destinations/${dest.id}`)} 
+            />
+          ))
+        )}
+      </div>
+    </motion.section>
+  );
+}
+
+function Header({ onNavigate }: { onNavigate: () => void }) {
+  return (
+    <header className="mb-6 flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <div>
+          <h3 className="text-lg font-semibold leading-tight">
             Lista de Desejos
           </h3>
+          <p className="text-xs text-muted-foreground">
+            Destinos para o futuro
+          </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/wishlist')}>
-          Ver todos
-          <ArrowRight className="ml-1 h-4 w-4" />
-        </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {topDestinations.map((dest, index) => (
-          <motion.div
-            key={dest.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.6 + index * 0.1 }}
-            className="group relative overflow-hidden rounded-xl"
-          >
-            <div className="aspect-4/3 overflow-hidden">
-              <img
-                src={dest.imageUrl}
-                alt={dest.name}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-              />
-            </div>
-            <div className="absolute inset-0 bg-linear-to-t from-foreground/80 via-foreground/20 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-3">
-              <h4 className="font-medium text-card">{dest.name}</h4>
-              <p className="text-sm text-card/70">{dest.country}</p>
-            </div>
-            <div className="absolute right-2 top-2">
-              <Star className={`h-4 w-4 ${priorityColors[dest.priority]} fill-current`} />
-            </div>
-          </motion.div>
-        ))}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onNavigate}
+        className="cursor-pointer"
+      >
+        Ver todos
+        <ArrowRight className="ml-2 h-4 w-4" />
+      </Button>
+    </header>
+  );
+}
+
+const DestinationCard = memo(({ destination, onClick }: { destination: Destination, onClick: () => void }) => {
+  return (
+    <motion.button
+      variants={cardVariants}
+      onClick={onClick}
+      className="group relative aspect-4/3 w-full overflow-hidden rounded-xl border border-border/10 outline-none focus-visible:ring-2 focus-visible:ring-primary shadow-sm"
+    >
+      <img
+        src={destination.imageUrl}
+        alt={destination.name}
+        loading="lazy"
+        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+      />
+      
+      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-80" />
+      
+      <div className="absolute inset-0 p-3 flex flex-col justify-end">
+        <h4 className="font-bold text-white text-sm sm:text-base leading-tight truncate">
+          {destination.name}
+        </h4>
+        <p className="text-[11px] text-white/80 font-medium truncate uppercase tracking-wider">
+          {destination.country}
+        </p>
       </div>
-    </motion.div>
+    </motion.button>
+  );
+});
+
+function EmptyState() {
+  return (
+    <p className="col-span-2 py-8 text-center text-sm text-muted-foreground italic">
+      Sua lista está vazia.
+    </p>
   );
 }

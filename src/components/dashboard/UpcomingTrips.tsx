@@ -82,7 +82,7 @@ function Header({ onNavigate }: { onNavigate: () => void }) {
         variant="ghost"
         size="sm"
         onClick={onNavigate}
-        className="hover:text-primary"
+        className="cursor-pointer"
       >
         Ver todas
         <ArrowRight className="ml-2 h-4 w-4" />
