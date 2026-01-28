@@ -5,7 +5,6 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { Tabs as TabsPrimitive } from "radix-ui"
 import { cn } from "../../lib/utils"
 
-
 function Tabs({
   className,
   orientation = "horizontal",
@@ -87,5 +86,4 @@ function TabsContent({
   )
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
-export { Tabs, TabsList, TabsTrigger, TabsContent, tabsListVariants }
+export { Tabs, TabsList, TabsTrigger, TabsContent }

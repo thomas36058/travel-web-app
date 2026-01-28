@@ -5,7 +5,6 @@ export interface Destination {
   countryCode: string;
   imageUrl: string;
   notes?: string;
-  priority: 'low' | 'medium' | 'high';
   createdAt: Date;
 }
 

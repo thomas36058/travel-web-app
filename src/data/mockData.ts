@@ -7,7 +7,6 @@ export const mockDestinations: Destination[] = [
     country: 'Japão',
     countryCode: 'JP',
     imageUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop',
-    priority: 'high',
     notes: 'Visitar durante a época das cerejeiras',
     createdAt: new Date('2024-01-15'),
   },
@@ -17,7 +16,6 @@ export const mockDestinations: Destination[] = [
     country: 'Grécia',
     countryCode: 'GR',
     imageUrl: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?w=400&h=300&fit=crop',
-    priority: 'medium',
     createdAt: new Date('2024-02-20'),
   },
   {
@@ -26,7 +24,6 @@ export const mockDestinations: Destination[] = [
     country: 'Peru',
     countryCode: 'PE',
     imageUrl: 'https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=400&h=300&fit=crop',
-    priority: 'high',
     createdAt: new Date('2024-03-10'),
   },
   {
@@ -35,7 +32,6 @@ export const mockDestinations: Destination[] = [
     country: 'Maldivas',
     countryCode: 'MV',
     imageUrl: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=400&h=300&fit=crop',
-    priority: 'low',
     createdAt: new Date('2024-04-05'),
   },
 ];
