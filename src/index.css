@@ -1,6 +1,6 @@
-@import "tailwindcss";
-
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+@import "tailwindcss";
 
 @theme {
   /* Fonts */
@@ -10,7 +10,7 @@
   /* Border Radius */
   --radius-xl: 1rem;
 
-  /* Colors - Mapping to CSS Variables */
+  /* Colors */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
 
@@ -61,7 +61,6 @@
   --shadow-button: 0 4px 14px -2px hsl(var(--primary) / 0.35);
 }
 
-/* Base Styles & Variables */
 @layer base {
   :root {
     --background: 37 38% 96%;
@@ -110,7 +109,6 @@
   }
 }
 
-/* Custom Components */
 @layer components {
   .stat-icon-terracotta { @apply bg-stat-terracotta/15 text-stat-terracotta; }
   .stat-icon-sage { @apply bg-stat-sage/15 text-stat-sage; }
