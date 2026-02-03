@@ -121,6 +121,7 @@ export default function TripDetail() {
     () => trip?.expenses.reduce((sum, e) => sum + e.amount, 0) ?? 0,
     [trip?.expenses]
   )
+
   const remaining = useMemo(
     () => (trip?.budget ?? 0) - totalExpenses,
     [trip?.budget, totalExpenses]

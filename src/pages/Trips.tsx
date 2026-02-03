@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Plane, Filter } from 'lucide-react';
@@ -11,6 +11,7 @@ import { useToast } from '../hooks/use-toast';
 import { mockPlannedTrips } from '../data/mockData';
 import type { PlannedTrip } from '../types/travel';
 import TripCard from '../components/pages/TripCard';
+import { useTripStats } from '../hooks/useTripStats';
 
 const STATUS_LABELS = {
   planning: 'Planejando',
@@ -26,6 +27,7 @@ export default function Trips() {
   const [filter, setFilter] = useState<'all' | 'planning' | 'booked' | 'completed'>('all');
   const navigate = useNavigate();
   const { toast } = useToast();
+  const stats = useTripStats(trips)
 
   const [formData, setFormData] = useState({
     destination: '',
@@ -73,20 +75,6 @@ export default function Trips() {
     ? trips 
     : trips.filter(t => t.status === filter);
 
-  const summary = useMemo(() => {
-    const totalBudget = trips.reduce((s, t) => s + t.budget, 0);
-    const totalExpenses = trips.reduce(
-      (s, t) => s + t.expenses.reduce((es, e) => es + e.amount, 0),
-      0
-    );
-
-    return {
-      totalBudget,
-      totalExpenses,
-      available: totalBudget - totalExpenses,
-    };
-  }, [trips]);
-
   return (
     <div className="space-y-8">
       <motion.div
@@ -103,7 +91,7 @@ export default function Trips() {
               Minhas Viagens
             </h1>
             <p className="text-muted-foreground">
-              {trips.length} viagens • €{summary.totalBudget.toLocaleString()} orçamento
+              {trips.length} viagens • €{stats.totalBudget} orçamento
             </p>
           </div>
         </div>
@@ -256,7 +244,7 @@ export default function Trips() {
           <p className="text-sm text-muted-foreground">Orçamento Total</p>
 
           <p className="mt-1 font-display text-3xl font-bold text-foreground">
-            €{summary.totalBudget.toLocaleString()}
+            €{stats.totalBudget}
           </p>
         </motion.div>
         <motion.div
@@ -268,7 +256,7 @@ export default function Trips() {
           <p className="text-sm text-muted-foreground">Gastos Totais</p>
 
           <p className="mt-1 font-display text-3xl font-bold text-primary">
-            €{summary.totalExpenses.toLocaleString()}
+            €{stats.totalExpenses}
           </p>
         </motion.div>
         <motion.div
@@ -280,7 +268,7 @@ export default function Trips() {
           <p className="text-sm text-muted-foreground">Disponível</p>
 
           <p className="mt-1 font-display text-3xl font-bold text-stat-green">
-            €{(summary.totalBudget - summary.totalExpenses).toLocaleString()}
+            €{stats.totalBudget - stats.totalExpenses}
           </p>
         </motion.div>
       </div>
