@@ -48,20 +48,31 @@ export interface StatCardProps {
   iconBg?: string
 }
 
-const expenseIcons = {
-  accommodation: Hotel,
-  transportation: Car,
-  attractions: Ticket,
-  food: Utensils,
-  other: MoreHorizontal,
-}
-const expenseLabels = {
-  accommodation: 'Hospedagem',
-  transportation: 'Transporte',
-  attractions: 'Atrações',
-  food: 'Alimentação',
-  other: 'Outros',
-}
+const EXPENSE_CATEGORIES = {
+  accommodation: {
+    label: 'Hospedagem',
+    icon: Hotel,
+  },
+  transportation: {
+    label: 'Transporte',
+    icon: Car,
+  },
+  attractions: {
+    label: 'Atrações',
+    icon: Ticket,
+  },
+  food: {
+    label: 'Alimentação',
+    icon: Utensils,
+  },
+  other: {
+    label: 'Outros',
+    icon: MoreHorizontal,
+  },
+} as const;
+
+type ExpenseCategory = keyof typeof EXPENSE_CATEGORIES;
+
 const periodIcons = { morning: Sun, afternoon: CloudSun, evening: Moon }
 const periodLabels = { morning: 'Manhã', afternoon: 'Tarde', evening: 'Noite' }
 
@@ -78,7 +89,7 @@ export default function TripDetail() {
   >('morning')
 
   const [expenseForm, setExpenseForm] = useState({
-    category: 'accommodation' as Expense['category'],
+    category: 'accommodation' as ExpenseCategory,
     description: '',
     amount: '',
   })
@@ -264,13 +275,14 @@ export default function TripDetail() {
         <TabsList className="grid grid-cols-2 gap-4 w-full p-0 bg-transparent">
           <TabsTrigger
             value="expenses"
-            className="data-[state=active]:bg-primary data-[state=active]:text-white py-2 bg-muted"
+            className="data-[state=active]:bg-primary data-[state=active]:text-white py-2 bg-muted hover:data-[state=active]:text-white hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
           >
             Gastos
           </TabsTrigger>
+
           <TabsTrigger
             value="itinerary"
-            className="data-[state=active]:bg-primary data-[state=active]:text-white py-2 bg-muted"
+            className="data-[state=active]:bg-primary data-[state=active]:text-white py-2 bg-muted hover:data-[state=active]:text-white hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
           >
             Roteiro
           </TabsTrigger>
@@ -287,7 +299,7 @@ export default function TripDetail() {
               onOpenChange={setIsExpenseDialogOpen}
             >
               <DialogTrigger>
-                <Button className="gap-2">
+                <Button className="gap-2 cursor-pointer">
                   <Plus className="h-4 w-4" />
                   Adicionar Gasto
                 </Button>
@@ -303,21 +315,32 @@ export default function TripDetail() {
                     <Label>Categoria</Label>
                     <Select
                       value={expenseForm.category}
-                      onValueChange={(v: Expense['category'] | null) => {
-                        if (v === null) return
-                        setExpenseForm((prev) => ({ ...prev, category: v }))
+                      onValueChange={(v: ExpenseCategory | null) => {
+                        if (!v) return;
+                        setExpenseForm((prev) => ({ ...prev, category: v }));
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue>
+                          {EXPENSE_CATEGORIES[expenseForm.category].label}
+                        </SelectValue>
                       </SelectTrigger>
 
                       <SelectContent>
-                        {Object.entries(expenseLabels).map(([key, label]) => (
-                          <SelectItem key={key} value={key}>
-                            {label}
-                          </SelectItem>
-                        ))}
+                        {(Object.keys(EXPENSE_CATEGORIES) as ExpenseCategory[]).map(
+                          (category) => {
+                            const Icon = EXPENSE_CATEGORIES[category].icon;
+                            
+                            return (
+                              <SelectItem key={category} value={category}>
+                                <div className="flex items-center gap-2">
+                                  <Icon className="h-4 w-4" />
+                                  {EXPENSE_CATEGORIES[category].label}
+                                </div>
+                              </SelectItem>
+                            );
+                          }
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -357,12 +380,13 @@ export default function TripDetail() {
                     <Button
                       type="button"
                       variant="outline"
+                      className='cursor-pointer'
                       onClick={() => setIsExpenseDialogOpen(false)}
                     >
                       Cancelar
                     </Button>
 
-                    <Button type="submit">Adicionar</Button>
+                    <Button type="submit" className='cursor-pointer'>Adicionar</Button>
                   </div>
                 </form>
               </DialogContent>
@@ -506,12 +530,13 @@ export default function TripDetail() {
                   <Button
                     type="button"
                     variant="outline"
+                    className='cursor-pointer'
                     onClick={() => setIsActivityDialogOpen(false)}
                   >
                     Cancelar
                   </Button>
 
-                  <Button type="submit">Adicionar</Button>
+                  <Button type="submit" className='cursor-pointer'>Adicionar</Button>
                 </div>
               </form>
             </DialogContent>
@@ -563,7 +588,7 @@ export default function TripDetail() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="gap-1"
+                            className="gap-1 cursor-pointer"
                             onClick={() =>
                               selectedDayIndex !== null &&
                               openActivityDialog(selectedDayIndex, period)
@@ -632,7 +657,8 @@ function ExpenseCard({
   expense: Expense
   onDelete: (id: string) => void
 }) {
-  const Icon = expenseIcons[expense.category]
+  const Icon = EXPENSE_CATEGORIES[expense.category].icon
+
   return (
     <li>
       <motion.div
@@ -647,7 +673,8 @@ function ExpenseCard({
           <div>
             <p className="font-medium text-foreground">{expense.description}</p>
             <p className="text-sm text-muted-foreground">
-              {expenseLabels[expense.category]} •{' '}
+              {EXPENSE_CATEGORIES[expense.category].label}
+               •{' '}
               {format(expense.date, 'dd/MM/yyyy')}
             </p>
           </div>
@@ -660,7 +687,7 @@ function ExpenseCard({
             aria-label="Remover gasto"
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+            className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
             onClick={() => onDelete(expense.id)}
           >
             <Trash2 className="h-4 w-4" />
@@ -695,7 +722,7 @@ function ActivityCard({
         aria-label="Remover atividade"
         variant="ghost"
         size="icon"
-        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+        className="h-7 w-7 text-muted-foreground hover:text-destructive cursor-pointer"
         onClick={() => onDelete(activity.id)}
       >
         <Trash2 className="h-4 w-4" />

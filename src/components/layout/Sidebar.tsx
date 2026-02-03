@@ -35,7 +35,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
         {!isCollapsed && (
           <span className="font-display text-xl font-bold text-foreground">
-            Voyager
+            Travel Planner
           </span>
         )}
       </div>
@@ -67,12 +67,11 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           isCollapsed && "justify-center p-2"
         )}>
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
-            V
+            A
           </div>
           {!isCollapsed && (
             <div className="min-w-0">
-              <p className="font-medium text-foreground truncate">Viajante</p>
-              <p className="text-sm text-muted-foreground truncate">Plano Free</p>
+              <p className="font-medium text-foreground truncate">Admin</p>
             </div>
           )}
         </div>
@@ -80,7 +79,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-7 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background shadow-sm hover:bg-muted transition-colors"
+        className="absolute -right-3 top-7 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background shadow-sm hover:bg-muted transition-colors cursor-pointer"
         title={isCollapsed ? "Expandir" : "Recolher"}
       >
         {isCollapsed ? (

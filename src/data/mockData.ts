@@ -1,4 +1,4 @@
-import type { Destination, PlannedTrip, TravelStats } from "../types/travel";
+import type { Destination, PlannedTrip } from "../types/travel";
 
 export const mockDestinations: Destination[] = [
   {
@@ -84,12 +84,3 @@ export const mockPlannedTrips: PlannedTrip[] = [
     notes: 'Verificar ingressos para Sagrada Família',
   },
 ];
-
-export const visitedCountries = ['BR', 'PT', 'ES', 'FR', 'IT', 'US', 'AR', 'CL'];
-
-export const mockStats: TravelStats = {
-  totalTrips: 12,
-  countriesVisited: 8,
-  totalBudget: 5500,
-  upcomingTrips: 2,
-};

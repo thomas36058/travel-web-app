@@ -12,6 +12,14 @@ import { mockPlannedTrips } from '../data/mockData';
 import type { PlannedTrip } from '../types/travel';
 import TripCard from '../components/pages/TripCard';
 
+const STATUS_LABELS = {
+  planning: 'Planejando',
+  booked: 'Confirmada',
+  completed: 'Concluída',
+} as const;
+
+type Status = keyof typeof STATUS_LABELS;
+
 export default function Trips() {
   const [trips, setTrips] = useState<PlannedTrip[]>(mockPlannedTrips);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -101,24 +109,35 @@ export default function Trips() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Select value={filter} onValueChange={(v: typeof filter | null) => { if(!v) return; setFilter(v) }}>
-            <SelectTrigger className="w-40">
+          <Select 
+            value={filter}
+            onValueChange={(v: typeof filter | null) => {
+              if (!v) return;
+              setFilter(v);
+            }}
+          >
+            <SelectTrigger className="w-40 h-full!">
               <Filter className="mr-2 h-4 w-4" />
 
-              <SelectValue />
+              <SelectValue>
+                {filter === 'all' ? 'Todas' : STATUS_LABELS[filter]}
+              </SelectValue>
             </SelectTrigger>
 
             <SelectContent>
               <SelectItem value="all">Todas</SelectItem>
-              <SelectItem value="planning">Planejando</SelectItem>
-              <SelectItem value="booked">Confirmadas</SelectItem>
-              <SelectItem value="completed">Concluídas</SelectItem>
+
+              {(Object.keys(STATUS_LABELS) as Status[]).map(status => (
+                <SelectItem key={status} value={status}>
+                  {STATUS_LABELS[status]}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger>
-              <Button className="gap-2">
+              <Button className="gap-2 cursor-pointer">
                 <Plus className="h-5 w-5" />
                 Nova Viagem
               </Button>
@@ -152,16 +171,6 @@ export default function Trips() {
                       required
                     />
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="imageUrl">URL da imagem</Label>
-                  <Input
-                    id="imageUrl"
-                    value={formData.imageUrl}
-                    onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                    placeholder="https://..."
-                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -204,29 +213,33 @@ export default function Trips() {
                     <Label htmlFor="status">Status</Label>
                     <Select
                       value={formData.status}
-                      onValueChange={(value: 'planning' | 'booked' | 'completed' | null) => {
-                        if(!value) return;
-                        setFormData(prev => ({ ...prev, status: value }))
+                      onValueChange={(value: Status | null) => {
+                        if (!value) return;
+                        setFormData(prev => ({ ...prev, status: value }));
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue>
+                          {STATUS_LABELS[formData.status]}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="planning">Planejando</SelectItem>
-                        <SelectItem value="booked">Confirmada</SelectItem>
-                        <SelectItem value="completed">Concluída</SelectItem>
+                        {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  <Button className='cursor-pointer' type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                     Cancelar
                   </Button>
 
-                  <Button type="submit">Criar Viagem</Button>
+                  <Button type="submit" className='cursor-pointer'>Criar Viagem</Button>
                 </div>
               </form>
             </DialogContent>
@@ -293,7 +306,7 @@ export default function Trips() {
             <p className="mt-4 text-lg text-muted-foreground">
               Nenhuma viagem encontrada
             </p>
-            <Button className="mt-4" onClick={() => setIsDialogOpen(true)}>
+            <Button className="mt-4 cursor-pointer" onClick={() => setIsDialogOpen(true)}>
               Criar primeira viagem
             </Button>
           </motion.div>

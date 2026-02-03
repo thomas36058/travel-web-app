@@ -47,10 +47,3 @@ export interface PlannedTrip {
   itinerary: TripDay[];
   notes?: string;
 }
-
-export interface TravelStats {
-  totalTrips: number;
-  countriesVisited: number;
-  totalBudget: number;
-  upcomingTrips: number;
-}

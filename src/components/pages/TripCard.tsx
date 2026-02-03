@@ -16,7 +16,7 @@ const STATUS_LABELS: Record<TripStatus, string> = {
 
 const STATUS_STYLES: Record<TripStatus, string> = {
   planning: 'bg-accent text-accent-foreground',
-  booked: 'bg-primary/10 text-primary',
+  booked: 'bg-primary text-accent-foreground',
   completed: 'bg-muted text-muted-foreground',
 };
 
@@ -36,7 +36,7 @@ export default function TripCard({ trip, onClick }: TripCardProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       onClick={onClick}
-      className="group bg-card rounded-2xl p-6 transition-all duration-300 shadow-card cursor-pointer p-0 text-left transition-all hover:shadow-card-hover"
+      className="group bg-card rounded-2xl duration-300 shadow-card cursor-pointer p-0 text-left transition-all hover:shadow-card-hover"
     >
       <div className="flex flex-col sm:flex-row">
         <div className="relative h-48 overflow-hidden sm:h-auto sm:w-64">

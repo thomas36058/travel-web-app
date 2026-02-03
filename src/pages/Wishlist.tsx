@@ -59,7 +59,7 @@ const DestinationCard = memo<DestinationCardProps>(
             <Button
               size="icon"
               variant="secondary"
-              className="h-8 w-8"
+              className="h-8 w-8 cursor-pointer"
               onClick={handleEdit}
               aria-label={`Editar ${destination.name}`}
             >
@@ -69,7 +69,7 @@ const DestinationCard = memo<DestinationCardProps>(
             <Button
               size="icon"
               variant="destructive"
-              className="h-8 w-8"
+              className="h-8 w-8 cursor-pointer"
               onClick={handleDelete}
               aria-label={`Remover ${destination.name}`}
             >
@@ -223,7 +223,7 @@ export default function Wishlist() {
           <DialogTrigger>
             <Button
               size="lg"
-              className="rounded-full shadow-md transition-all hover:scale-105"
+              className="rounded-full shadow-md transition-all hover:scale-105 cursor-pointer"
             >
               <Plus className="mr-2 h-5 w-5" /> Adicionar Destino
             </Button>
@@ -283,7 +283,7 @@ export default function Wishlist() {
                 />
               </div>
 
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full cursor-pointer">
                 {editingDestination ? 'Atualizar Destino' : 'Adicionar à Lista'}
               </Button>
             </form>

@@ -1,12 +1,16 @@
 import { motion } from 'framer-motion';
-import { Plane, Globe, Wallet, Calendar } from 'lucide-react';
+import { Plane, Wallet, Calendar } from 'lucide-react';
 import StatCard from '../components/dashboard/StatCard';
-import { mockDestinations, mockPlannedTrips, mockStats } from '../data/mockData';
+import { mockDestinations, mockPlannedTrips } from '../data/mockData';
 import ExpenseChart from '../components/dashboard/ExpenseChart';
 import UpcomingTrips from '../components/dashboard/UpcomingTrips';
 import WishlistPreview from '../components/dashboard/WishlistPreview';
+import { useTripStats } from '../hooks/useTripStats';
 
 export default function Dashboard() {
+  const trips = mockPlannedTrips
+  const stats = useTripStats(trips)
+  
   return (
     <div className="space-y-8">
       <motion.div
@@ -27,28 +31,19 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total de Viagens"
-          value={mockStats.totalTrips}
-          subtitle="Desde 2020"
+          value={stats.totalTrips}
           icon={<Plane className="h-6 w-6" />}
           variant="terracotta"
         />
         <StatCard
-          title="Países Visitados"
-          value={mockStats.countriesVisited}
-          subtitle="+2 este ano"
-          icon={<Globe className="h-6 w-6" />}
-          variant="sage"
-        />
-        <StatCard
           title="Orçamento Total"
-          value={`€${mockStats.totalBudget.toLocaleString()}`}
-          subtitle="Planejado"
+          value={`€${stats.totalBudget.toLocaleString()}`}
           icon={<Wallet className="h-6 w-6" />}
           variant="amber"
         />
         <StatCard
           title="Próximas Viagens"
-          value={mockStats.upcomingTrips}
+          value={stats.upcomingTrips}
           subtitle="Confirmadas"
           icon={<Calendar className="h-6 w-6" />}
           variant="navy"
