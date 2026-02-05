@@ -12,6 +12,7 @@ import { mockPlannedTrips } from '../data/mockData';
 import type { PlannedTrip } from '../types/travel';
 import TripCard from '../components/pages/TripCard';
 import { useTripStats } from '../hooks/useTripStats';
+import { useAddTrip } from '../hooks/useAddTrip';
 
 const STATUS_LABELS = {
   planning: 'Planejando',
@@ -25,6 +26,8 @@ export default function Trips() {
   const [trips, setTrips] = useState<PlannedTrip[]>(mockPlannedTrips);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filter, setFilter] = useState<'all' | 'planning' | 'booked' | 'completed'>('all');
+  const { addTrip, loading, error } = useAddTrip();
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const stats = useTripStats(trips)
@@ -39,23 +42,21 @@ export default function Trips() {
     status: 'planning' as 'planning' | 'booked' | 'completed',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newTrip: PlannedTrip = {
-      id: Date.now().toString(),
+    const newTrip = await addTrip({
       destination: formData.destination,
       country: formData.country,
-      countryCode: 'XX',
-      imageUrl: formData.imageUrl || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop',
-      startDate: new Date(formData.startDate),
-      endDate: new Date(formData.endDate),
+      startDate: formData.startDate,
+      endDate: formData.endDate,
       status: formData.status,
       budget: Number(formData.budget) || 0,
-      currency: 'EUR',
       expenses: [],
-      itinerary: [],
-    };
+      itinerary: []
+    });
+
+    if(!newTrip) return;
     
     setTrips(prev => [newTrip, ...prev]);
     setIsDialogOpen(false);
@@ -211,6 +212,7 @@ export default function Trips() {
                           {STATUS_LABELS[formData.status]}
                         </SelectValue>
                       </SelectTrigger>
+
                       <SelectContent>
                         {Object.entries(STATUS_LABELS).map(([value, label]) => (
                           <SelectItem key={value} value={value}>
@@ -222,12 +224,20 @@ export default function Trips() {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                {error && (
+                  <p className="text-red-500 text-sm text-right">
+                    {error}
+                  </p>
+                )}
+
+                <div className="flex justify-end gap-3">
                   <Button className='cursor-pointer' type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                     Cancelar
                   </Button>
 
-                  <Button type="submit" className='cursor-pointer'>Criar Viagem</Button>
+                  <Button type="submit" className='cursor-pointer' disabled={loading}>
+                    {loading ? 'Salvando...' : 'Criar Viagem'}
+                  </Button>
                 </div>
               </form>
             </DialogContent>

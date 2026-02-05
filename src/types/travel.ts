@@ -37,7 +37,6 @@ export interface PlannedTrip {
   destination: string;
   country: string;
   countryCode: string;
-  imageUrl: string;
   startDate: Date;
   endDate: Date;
   status: 'planning' | 'booked' | 'completed';

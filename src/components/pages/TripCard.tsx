@@ -39,31 +39,26 @@ export default function TripCard({ trip, onClick }: TripCardProps) {
       className="group bg-card rounded-2xl duration-300 shadow-card cursor-pointer p-0 text-left transition-all hover:shadow-card-hover"
     >
       <div className="flex flex-col sm:flex-row">
-        <div className="relative h-48 overflow-hidden sm:h-auto sm:w-64">
-          <img
-            src={trip.imageUrl}
-            alt={trip.destination}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-          />
-
-          <div className={cn(
-            'absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-medium',
-            STATUS_STYLES[trip.status]
-          )}>
-            {STATUS_LABELS[trip.status]}
-          </div>
-        </div>
-
         <div className="flex flex-1 flex-col justify-between p-5">
           <div>
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-display text-xl font-semibold text-foreground">
-                  {trip.destination}
-                </h3>
-                <div className="mt-1 flex items-center gap-1 text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span>{trip.country}</span>
+                <div className="flex gap-2 items-center">
+                  <h3 className="font-display text-xl font-semibold text-foreground">
+                    {trip.destination}
+                  </h3>
+
+                  <div className="mt-1 flex items-center gap-1 text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    <span>{trip.country}</span>
+                  </div>
+                </div>
+                
+                <div className={cn(
+                  'my-2 rounded-full px-3 py-1 text-xs font-medium w-fit',
+                  STATUS_STYLES[trip.status]
+                )}>
+                  {STATUS_LABELS[trip.status]}
                 </div>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />

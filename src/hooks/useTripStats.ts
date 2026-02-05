@@ -14,7 +14,7 @@ export function useTripStats(trips: PlannedTrip[]) {
 
     const totalExpenses = trips.reduce(
       (sum, trip) =>
-        sum + trip.expenses.reduce((eSum, e) => eSum + e.amount, 0),
+        sum + (trip.expenses?.reduce((eSum, e) => eSum + e.amount, 0) || 0),
       0
     )
 
