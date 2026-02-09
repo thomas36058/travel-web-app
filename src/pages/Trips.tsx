@@ -8,11 +8,10 @@ import { Button } from '../components/ui/button';
 import { Label } from '../components/ui/label';
 import { Input } from '../components/ui/input';
 import { useToast } from '../hooks/use-toast';
-import { mockPlannedTrips } from '../data/mockData';
-import type { PlannedTrip } from '../types/travel';
 import TripCard from '../components/pages/TripCard';
 import { useTripStats } from '../hooks/useTripStats';
 import { useAddTrip } from '../hooks/useAddTrip';
+import { useTrips } from '../hooks/useTrips';
 
 const STATUS_LABELS = {
   planning: 'Planejando',
@@ -23,11 +22,14 @@ const STATUS_LABELS = {
 type Status = keyof typeof STATUS_LABELS;
 
 export default function Trips() {
-  const [trips, setTrips] = useState<PlannedTrip[]>(mockPlannedTrips);
+  const { trips, setTrips, loading } = useTrips()
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filter, setFilter] = useState<'all' | 'planning' | 'booked' | 'completed'>('all');
-  const { addTrip, loading, error } = useAddTrip();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const { addTrip } = useAddTrip();
+  const { removeTrip } = useTrips();
   const navigate = useNavigate();
   const { toast } = useToast();
   const stats = useTripStats(trips)
@@ -44,37 +46,70 @@ export default function Trips() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitError(null);
     
-    const newTrip = await addTrip({
-      destination: formData.destination,
-      country: formData.country,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      status: formData.status,
-      budget: Number(formData.budget) || 0,
-      expenses: [],
-      itinerary: []
-    });
+    try {
+      const newTrip = await addTrip({
+        destination: formData.destination,
+        country: formData.country,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        status: formData.status,
+        budget: Number(formData.budget) || 0,
+        expenses: [],
+        itinerary: []
+      });
+      
+      setTrips(prev => [newTrip, ...prev]);
+      setIsDialogOpen(false);
+      setFormData({
+        destination: '',
+        country: '',
+        imageUrl: '',
+        startDate: '',
+        endDate: '',
+        budget: '',
+        status: 'planning',
+      });
+      toast({ title: 'Viagem criada com sucesso!' });
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error
+        ? err.message
+        : 'Erro ao criar viagem. Tente novamente'
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
-    if(!newTrip) return;
-    
-    setTrips(prev => [newTrip, ...prev]);
-    setIsDialogOpen(false);
-    setFormData({
-      destination: '',
-      country: '',
-      imageUrl: '',
-      startDate: '',
-      endDate: '',
-      budget: '',
-      status: 'planning',
-    });
-    toast({ title: 'Viagem criada com sucesso!' });
+  const handleRemoveTrip = async (tripId: string) => {
+    if (!confirm("Tem certeza que deseja remover esta viagem?")) return;
+
+    try {
+      await removeTrip(tripId);
+      toast({ title: 'Viagem removida com sucesso!' });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Erro ao remover viagem',
+        variant: 'destructive',
+      });
+    }
   };
 
   const filteredTrips = filter === 'all' 
     ? trips 
     : trips.filter(t => t.status === filter);
+
+  if (loading) {
+    return (
+      <div className="py-16 text-center text-muted-foreground">
+        Carregando viagens...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -124,7 +159,13 @@ export default function Trips() {
             </SelectContent>
           </Select>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog 
+            open={isDialogOpen} 
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) setSubmitError(null);
+            }}
+          >
             <DialogTrigger>
               <Button className="gap-2 cursor-pointer">
                 <Plus className="h-5 w-5" />
@@ -224,9 +265,9 @@ export default function Trips() {
                   </div>
                 </div>
 
-                {error && (
+                {submitError && (
                   <p className="text-red-500 text-sm text-right">
-                    {error}
+                    {submitError}
                   </p>
                 )}
 
@@ -235,8 +276,8 @@ export default function Trips() {
                     Cancelar
                   </Button>
 
-                  <Button type="submit" className='cursor-pointer' disabled={loading}>
-                    {loading ? 'Salvando...' : 'Criar Viagem'}
+                  <Button type="submit" className='cursor-pointer' disabled={isSubmitting}>
+                    {isSubmitting ? 'Criando viagem...' : 'Criar Viagem'}
                   </Button>
                 </div>
               </form>
@@ -290,6 +331,7 @@ export default function Trips() {
               key={trip.id}
               trip={trip}
               onClick={() => navigate(`/trips/${trip.id}`)}
+              onDelete={() => handleRemoveTrip(trip.id)}
             />
           ))}
         </AnimatePresence>

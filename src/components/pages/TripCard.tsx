@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion'
-import { Calendar, MapPin, Wallet, ChevronRight } from 'lucide-react'
+import { Calendar, MapPin, Wallet, ChevronRight, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 import type { PlannedTrip } from '../../types/travel'
 import { cn, getExpensePercent, getTripExpenses } from '../../lib/utils'
+import { Button } from '../ui/button'
 
 type TripStatus = PlannedTrip['status'];
 
@@ -23,9 +24,10 @@ const STATUS_STYLES: Record<TripStatus, string> = {
 interface TripCardProps {
   trip: PlannedTrip
   onClick: () => void
+  onDelete: () => void
 }
 
-export default function TripCard({ trip, onClick }: TripCardProps) {
+export default function TripCard({ trip, onClick, onDelete }: TripCardProps) {
   const totalExpenses = getTripExpenses(trip)
   const expensePercent = getExpensePercent(trip)
 
@@ -61,6 +63,7 @@ export default function TripCard({ trip, onClick }: TripCardProps) {
                   {STATUS_LABELS[trip.status]}
                 </div>
               </div>
+              
               <ChevronRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-1" />
             </div>
 
@@ -91,6 +94,18 @@ export default function TripCard({ trip, onClick }: TripCardProps) {
               <span className="text-sm text-muted-foreground">
                 €{totalExpenses.toLocaleString()} gasto
               </span>
+
+              {onDelete && (
+                <Button
+                  aria-label="Remover viagem"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-accent-foreground cursor-pointer"
+                  onClick={() => onDelete()}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           )}
         </div>

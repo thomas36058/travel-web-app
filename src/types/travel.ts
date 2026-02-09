@@ -2,7 +2,6 @@ export interface Destination {
   id: string;
   name: string;
   country: string;
-  countryCode: string;
   imageUrl: string;
   notes?: string;
   createdAt: Date;
@@ -14,7 +13,7 @@ export interface Expense {
   description: string;
   amount: number;
   currency: string;
-  date: Date;
+  date: string;
 }
 
 export interface DayActivity {
@@ -36,7 +35,6 @@ export interface PlannedTrip {
   id: string;
   destination: string;
   country: string;
-  countryCode: string;
   startDate: Date;
   endDate: Date;
   status: 'planning' | 'booked' | 'completed';
@@ -45,4 +43,5 @@ export interface PlannedTrip {
   expenses: Expense[];
   itinerary: TripDay[];
   notes?: string;
+  createdAt: Date;
 }

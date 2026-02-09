@@ -26,7 +26,7 @@ interface DestinationCardProps {
   onDelete: (id: string) => void
 }
 
-type FormData = Omit<Destination, 'id' | 'createdAt' | 'countryCode'>
+type FormData = Omit<Destination, 'id' | 'createdAt'>
 
 const DestinationCard = memo<DestinationCardProps>(
   ({ destination, onEdit, onDelete }) => {
@@ -159,7 +159,6 @@ export default function Wishlist() {
           ...formData,
           id: crypto.randomUUID(),
           createdAt: new Date(),
-          countryCode: 'XX',
         }
         setDestinations((prev) => [newDestination, ...prev])
         toast({

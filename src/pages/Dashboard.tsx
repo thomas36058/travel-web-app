@@ -1,15 +1,24 @@
 import { motion } from 'framer-motion';
 import { Plane, Wallet, Calendar } from 'lucide-react';
 import StatCard from '../components/dashboard/StatCard';
-import { mockDestinations, mockPlannedTrips } from '../data/mockData';
 import ExpenseChart from '../components/dashboard/ExpenseChart';
 import UpcomingTrips from '../components/dashboard/UpcomingTrips';
 import WishlistPreview from '../components/dashboard/WishlistPreview';
 import { useTripStats } from '../hooks/useTripStats';
+import { useTrips } from '../hooks/useTrips';
+import { mockDestinations } from '../data/mockData';
 
 export default function Dashboard() {
-  const trips = mockPlannedTrips
+  const { trips, loading } = useTrips();
   const stats = useTripStats(trips)
+
+  if (loading) {
+    return (
+      <div className="py-16 text-center text-muted-foreground">
+        Carregando dashboard...
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-8">
@@ -35,12 +44,14 @@ export default function Dashboard() {
           icon={<Plane className="h-6 w-6" />}
           variant="terracotta"
         />
+
         <StatCard
           title="Orçamento Total"
           value={`€${stats.totalBudget.toLocaleString()}`}
           icon={<Wallet className="h-6 w-6" />}
           variant="amber"
         />
+
         <StatCard
           title="Próximas Viagens"
           value={stats.upcomingTrips}
@@ -51,11 +62,11 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <ExpenseChart trips={mockPlannedTrips} />
+        <ExpenseChart trips={trips} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <UpcomingTrips trips={mockPlannedTrips} />
+        <UpcomingTrips trips={trips} />
         <WishlistPreview destinations={mockDestinations} />
       </div>
     </div>

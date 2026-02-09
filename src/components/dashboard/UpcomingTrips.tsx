@@ -101,15 +101,6 @@ const TripCard = memo(({ trip, onNavigate }: {
       onClick={onNavigate}
       className="group cursor-pointer w-full flex items-center gap-4 rounded-xl border border-border/40 p-3 text-left transition-all hover:border-primary/30 hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-primary outline-none"
     >
-      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg shadow-sm">
-        <img
-          src={trip.imageUrl}
-          alt={`Foto de ${trip.destination}`}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-        />
-      </div>
-
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <MapPin className="h-3.5 w-3.5 text-primary" />

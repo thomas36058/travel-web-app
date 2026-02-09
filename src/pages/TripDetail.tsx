@@ -20,8 +20,7 @@ import {
   Moon,
 } from 'lucide-react'
 import { useToast } from '../hooks/use-toast'
-import type { DayActivity, Expense, PlannedTrip } from '../types/travel'
-import { mockPlannedTrips } from '../data/mockData'
+import type { DayActivity, Expense } from '../types/travel'
 import { Button } from '../components/ui/button'
 import {
   Dialog,
@@ -40,7 +39,9 @@ import {
 } from '../components/ui/select'
 import { Input } from '../components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
-import { v4 as uuidv4 } from 'uuid'
+import { useTripExpenses } from '../hooks/useTripExpenses'
+import { useTripActivities } from '../hooks/useTripActivities'
+import { useTrips } from '../hooks/useTrips'
 
 export interface StatCardProps {
   title: string
@@ -78,12 +79,13 @@ const periodLabels = { morning: 'Manhã', afternoon: 'Tarde', evening: 'Noite' }
 
 export default function TripDetail() {
   const { id } = useParams<{ id: string }>()
+  const { trips, loading } = useTrips()
   const navigate = useNavigate()
   const { toast } = useToast()
 
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false)
   const [isActivityDialogOpen, setIsActivityDialogOpen] = useState(false)
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0)
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(0)
   const [selectedPeriod, setSelectedPeriod] = useState<
     'morning' | 'afternoon' | 'evening'
   >('morning')
@@ -101,112 +103,48 @@ export default function TripDetail() {
     time: '',
   })
 
-  const [trip, setTrip] = useState<PlannedTrip | null>(() => {
-    const foundTrip = mockPlannedTrips.find((t) => t.id === id)
+  const trip = useMemo(() => {
+    if (!trips || trips.length === 0) return null
+
+    const foundTrip = trips.find(t => t.id === id)
     if (!foundTrip) return null
 
-    const days = differenceInDays(foundTrip.endDate, foundTrip.startDate) + 1
+    const startDate = new Date(foundTrip.startDate)
+    const endDate = new Date(foundTrip.endDate)
+    const days = differenceInDays(endDate, startDate) + 1
 
     return {
       ...foundTrip,
+      startDate,
+      endDate,
       itinerary: Array.from({ length: days }, (_, i) => ({
         id: `day-${i}`,
-        date: addDays(foundTrip.startDate, i),
+        date: addDays(startDate, i),
         activities: foundTrip.itinerary?.[i]?.activities ?? [],
       })),
     }
-  })
+  }, [trips, id])
 
-  const totalExpenses = useMemo(
-    () => trip?.expenses.reduce((sum, e) => sum + e.amount, 0) ?? 0,
-    [trip?.expenses]
-  )
+  const {
+    expenses,
+    totalExpenses,
+    remaining,
+    addExpense,
+    removeExpense,
+  } = useTripExpenses(trip)
 
-  const remaining = useMemo(
-    () => (trip?.budget ?? 0) - totalExpenses,
-    [trip?.budget, totalExpenses]
-  )
+  const {
+    itinerary,
+    addActivity,
+    removeActivity,
+  } = useTripActivities(trip)
 
-  const handleAddExpense = (e: React.FormEvent) => {
-    e.preventDefault()
-    const newExpense: Expense = {
-      id: uuidv4(),
-      category: expenseForm.category,
-      description: expenseForm.description,
-      amount: Number(expenseForm.amount),
-      currency: 'EUR',
-      date: new Date(),
-    }
-    setTrip((prev) =>
-      prev ? { ...prev, expenses: [...prev.expenses, newExpense] } : null
+  if (loading) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
     )
-    setIsExpenseDialogOpen(false)
-    setExpenseForm({ category: 'accommodation', description: '', amount: '' })
-    toast({ title: 'Gasto adicionado!' })
-  }
-
-  const handleDeleteExpense = (expenseId: string) => {
-    setTrip((prev) =>
-      prev
-        ? {
-            ...prev,
-            expenses: prev.expenses.filter((e) => e.id !== expenseId),
-          }
-        : null
-    )
-    toast({ title: 'Gasto removido' })
-  }
-
-  const handleAddActivity = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (selectedDayIndex === null) return
-
-    const newActivity: DayActivity = {
-      id: uuidv4(),
-      period: selectedPeriod,
-      ...activityForm,
-    }
-
-    setTrip((prev) => {
-      if (!prev) return null
-
-      const newItinerary = [...prev.itinerary]
-      newItinerary[selectedDayIndex] = {
-        ...newItinerary[selectedDayIndex],
-        activities: [...newItinerary[selectedDayIndex].activities, newActivity],
-      }
-
-      return { ...prev, itinerary: newItinerary }
-    })
-
-    setIsActivityDialogOpen(false)
-    setActivityForm({ title: '', description: '', location: '', time: '' })
-    toast({ title: 'Atividade adicionada!' })
-  }
-
-  const handleDeleteActivity = (dayIndex: number, activityId: string) => {
-    setTrip((prev) => {
-      if (!prev) return null
-      const newItinerary = [...prev.itinerary]
-      newItinerary[dayIndex] = {
-        ...newItinerary[dayIndex],
-        activities: newItinerary[dayIndex].activities.filter(
-          (a) => a.id !== activityId
-        ),
-      }
-      return { ...prev, itinerary: newItinerary }
-    })
-    toast({ title: 'Atividade removida' })
-  }
-
-  const openActivityDialog = (
-    dayIndex: number,
-    period: 'morning' | 'afternoon' | 'evening'
-  ) => {
-    setSelectedDayIndex(dayIndex)
-    setSelectedPeriod(period)
-    setIsActivityDialogOpen(true)
   }
 
   if (!trip) {
@@ -215,6 +153,71 @@ export default function TripDetail() {
         <p className="text-muted-foreground">Viagem não encontrada</p>
       </div>
     )
+  }
+
+  const handleAddExpense = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    try {
+      await addExpense(trip.id, {
+        category: expenseForm.category,
+        description: expenseForm.description,
+        amount: Number(expenseForm.amount),
+        currency: 'EUR',
+      })
+
+      setIsExpenseDialogOpen(false)
+      setExpenseForm({ category: 'accommodation', description: '', amount: '' })
+
+      toast({ title: 'Gasto adicionado!' })
+    } catch (error) {
+      console.error(error)
+
+      toast({
+        title: 'Erro ao adicionar gasto',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleDeleteExpense = async (expenseId: string) => {
+    await removeExpense(trip.id, expenseId)
+    toast({ title: 'Gasto removido' })
+  }
+
+  const handleAddActivity = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (selectedDayIndex === null) return
+
+    try {
+      await addActivity(selectedDayIndex, selectedPeriod, activityForm)
+      setActivityForm({ title: "", description: "", location: "", time: "" })
+      setIsActivityDialogOpen(false)
+      toast({ title: "Atividade adicionada!" })
+    } catch (err) {
+      console.error(err)
+      toast({ title: "Erro ao adicionar atividade", variant: "destructive" })
+    }
+  }
+
+  const handleDeleteActivity = async (dayIndex: number, activityId: string) => {
+    try {
+      await removeActivity(dayIndex, activityId)
+      toast({ title: "Atividade removida" })
+    } catch (err) {
+      console.error(err)
+      toast({ title: "Erro ao remover atividade", variant: "destructive" })
+    }
+  }
+
+
+  const openActivityDialog = (
+    dayIndex: number,
+    period: 'morning' | 'afternoon' | 'evening'
+  ) => {
+    setSelectedDayIndex(dayIndex)
+    setSelectedPeriod(period)
+    setIsActivityDialogOpen(true)
   }
 
   return (
@@ -395,7 +398,7 @@ export default function TripDetail() {
           </div>
 
           <div className="space-y-3">
-            {trip.expenses.length === 0 ? (
+            {expenses.length === 0 ? (
               <div className="bg-card rounded-2xl p-6 transition-all duration-300 shadow-card py-12 text-center">
                 <Wallet className="mx-auto h-10 w-10 text-muted-foreground/50" />
 
@@ -405,7 +408,7 @@ export default function TripDetail() {
               </div>
             ) : (
               <ul className="space-y-3">
-                {trip.expenses.map((expense) => (
+                {expenses.map((expense) => (
                   <ExpenseCard
                     key={expense.id}
                     expense={expense}
@@ -426,35 +429,32 @@ export default function TripDetail() {
 
               <Select
                 value={
-                  selectedDayIndex !== null
-                    ? selectedDayIndex.toString()
-                    : undefined
+                  selectedDayIndex !== null ? selectedDayIndex.toString() : undefined
                 }
                 onValueChange={(v) => setSelectedDayIndex(Number(v))}
               >
                 <SelectTrigger className="w-70">
                   <SelectValue>
-                    {selectedDayIndex !== null
+                    {selectedDayIndex !== null && itinerary[selectedDayIndex]
                       ? format(
-                          trip.itinerary[selectedDayIndex].date,
+                          itinerary[selectedDayIndex].date,
                           "EEEE, dd 'de' MMMM",
                           { locale: ptBR }
                         )
-                      : 'Selecionar dia'}
+                      : "Selecionar dia"}
                   </SelectValue>
                 </SelectTrigger>
 
                 <SelectContent>
-                  {trip.itinerary.map((day, index) => (
+                  {itinerary.map((day, index) => (
                     <SelectItem key={day.id} value={index.toString()}>
-                      Dia {index + 1} -{' '}
-                      {format(day.date, "EEEE, dd 'de' MMMM", {
-                        locale: ptBR,
-                      })}
+                      Dia {index + 1} -{" "}
+                      {format(day.date, "EEEE, dd 'de' MMMM", { locale: ptBR })}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+
             </div>
           </div>
 
@@ -543,9 +543,9 @@ export default function TripDetail() {
             </DialogContent>
           </Dialog>
 
-          {trip.itinerary[selectedDayIndex] && (
+          {selectedDayIndex !== null && itinerary[selectedDayIndex] && (
             <motion.div
-              key={trip.itinerary[selectedDayIndex].id}
+              key={itinerary[selectedDayIndex].id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-card rounded-2xl p-6 transition-all duration-300 shadow-card"
@@ -557,7 +557,7 @@ export default function TripDetail() {
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     {format(
-                      trip.itinerary[selectedDayIndex].date,
+                      itinerary[selectedDayIndex].date,
                       "EEEE, dd 'de' MMMM",
                       { locale: ptBR }
                     )}
@@ -569,7 +569,7 @@ export default function TripDetail() {
                 {(['morning', 'afternoon', 'evening'] as const).map(
                   (period) => {
                     const PeriodIcon = periodIcons[period]
-                    const selectedDay = trip.itinerary[selectedDayIndex]
+                    const selectedDay = itinerary[selectedDayIndex]
                     const activities = selectedDay.activities.filter(
                       (a) => a.period === period
                     )
@@ -676,7 +676,7 @@ function ExpenseCard({
             <p className="text-sm text-muted-foreground">
               {EXPENSE_CATEGORIES[expense.category].label}
                •{' '}
-              {format(expense.date, 'dd/MM/yyyy')}
+              {format(new Date(expense.date), 'dd/MM/yyyy')}
             </p>
           </div>
         </div>
