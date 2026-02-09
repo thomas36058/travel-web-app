@@ -2,7 +2,6 @@ import { useState, useCallback, useMemo, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Heart, MapPin, Trash2, Edit2 } from 'lucide-react'
 import type { Destination } from '../types/travel'
-import { mockDestinations } from '../data/mockData'
 import { useToast } from '../hooks/use-toast'
 
 import {
@@ -16,6 +15,7 @@ import { Button } from '../components/ui/button'
 import { Label } from '../components/ui/label'
 import { Input } from '../components/ui/input'
 import { Textarea } from '../components/ui/textarea'
+import { useWishlist } from '../hooks/useWishlist'
 
 const DEFAULT_IMAGE_URL =
   'https://images.unsplash.com/photo-1488646953014-85cb44e25828'
@@ -26,7 +26,172 @@ interface DestinationCardProps {
   onDelete: (id: string) => void
 }
 
-type FormData = Omit<Destination, 'id' | 'createdAt'>
+type FormData = Omit<Destination, 'id' | 'created_at'>
+
+export default function Wishlist() {
+  const { destinations, addDestination, removeDestination, updateDestination, loading } = useWishlist();
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingDestination, setEditingDestination] = useState<Destination | null>(null)
+
+  const { toast } = useToast()
+
+  const initialFormState: FormData = useMemo(
+    () => ({
+      name: '',
+      country: '',
+      imageUrl: '',
+      notes: '',
+    }),
+    []
+  )
+
+  const [formData, setFormData] = useState<FormData>(initialFormState)
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      setFormData({ name: '', country: '', imageUrl: '', notes: '' });
+      setEditingDestination(null);
+    }
+  }, []);
+
+  const handleEdit = useCallback((dest: Destination) => {
+    setEditingDestination(dest);
+    setFormData({ name: dest.name, country: dest.country, imageUrl: dest.imageUrl || '', notes: '' });
+    setIsDialogOpen(true);
+  }, []);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingDestination) {
+      const { error } = await updateDestination(editingDestination.id, formData);
+      if (!error) toast({ title: 'Atualizado!', description: 'Destino atualizado com sucesso.' });
+    } else {
+      const { error } = await addDestination(formData);
+      if (!error) toast({ title: 'Adicionado!', description: `${formData.name} foi adicionado à lista.` });
+    }
+    handleOpenChange(false);
+  }, [formData, editingDestination, addDestination, updateDestination, toast, handleOpenChange]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await removeDestination(id);
+    
+    if (!result?.error) {
+      toast({ title: 'Removido', description: 'Destino removido.', variant: 'destructive' });
+    } else {
+      toast({ title: 'Erro', description: result.error, variant: 'destructive' });
+    }
+  }, [removeDestination, toast]);
+
+
+  const destinationCount = useMemo(
+    () => destinations.length,
+    [destinations.length]
+  )
+
+  if (loading) return <p>Carregando...</p>;
+
+  return (
+    <div className="container mx-auto max-w-7xl space-y-8 p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+            <Heart className="h-8 w-8" fill="currentColor" />
+          </div>
+          <div>
+            <h1 className="font-display text-4xl font-extrabold tracking-tight">
+              Wishlist
+            </h1>
+            <p className="text-muted-foreground">
+              {destinationCount} {destinationCount === 1 ? 'lugar' : 'lugares'}{' '}
+              no seu radar
+            </p>
+          </div>
+        </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+          <DialogTrigger>
+            <Button
+              size="lg"
+              className="rounded-full shadow-md transition-all hover:scale-105 cursor-pointer"
+            >
+              <Plus className="mr-2 h-5 w-5" /> Adicionar Destino
+            </Button>
+          </DialogTrigger>
+
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {editingDestination ? 'Editar Destino' : 'Novo Destino'}
+              </DialogTitle>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome</Label>
+                  <Input id="name" value={formData.name} onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))} required />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="country">País</Label>
+                  <Input id="country" value={formData.country} onChange={e => setFormData(prev => ({ ...prev, country: e.target.value }))} required />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="imageUrl">URL da Imagem</Label>
+                <Input id="imageUrl" value={formData.imageUrl} onChange={e => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notas e Dicas</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Adicione suas observações..."
+                  rows={3}
+                />
+              </div>
+
+              <Button type="submit" className="w-full cursor-pointer">
+                {editingDestination ? 'Atualizar' : 'Adicionar'}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {destinationCount === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <Heart className="h-16 w-16 text-muted-foreground/30 mb-4" />
+
+          <h2 className="text-2xl font-bold text-muted-foreground mb-2">
+            Nenhum destino ainda
+          </h2>
+
+          <p className="text-muted-foreground">
+            Comece adicionando seus destinos dos sonhos!
+          </p>
+        </div>
+      ) : (
+        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <AnimatePresence mode="popLayout">
+            {destinations.map((dest) => (
+              <DestinationCard
+                key={dest.id}
+                destination={dest}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            ))}
+          </AnimatePresence>
+        </ul>
+      )}
+    </div>
+  )
+}
 
 const DestinationCard = memo<DestinationCardProps>(
   ({ destination, onEdit, onDelete }) => {
@@ -96,226 +261,3 @@ const DestinationCard = memo<DestinationCardProps>(
     )
   }
 )
-
-export default function Wishlist() {
-  const [destinations, setDestinations] =
-    useState<Destination[]>(mockDestinations)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingDestination, setEditingDestination] =
-    useState<Destination | null>(null)
-
-  const { toast } = useToast()
-
-  const initialFormState: FormData = useMemo(
-    () => ({
-      name: '',
-      country: '',
-      imageUrl: '',
-      notes: '',
-    }),
-    []
-  )
-
-  const [formData, setFormData] = useState<FormData>(initialFormState)
-
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      setIsDialogOpen(open)
-      if (!open) {
-        setFormData(initialFormState)
-        setEditingDestination(null)
-      }
-    },
-    [initialFormState]
-  )
-
-  const handleEdit = useCallback((destination: Destination) => {
-    setEditingDestination(destination)
-    setFormData({
-      name: destination.name,
-      country: destination.country,
-      imageUrl: destination.imageUrl,
-      notes: destination.notes,
-    })
-    setIsDialogOpen(true)
-  }, [])
-
-  const handleSubmit = useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault()
-
-      if (editingDestination) {
-        setDestinations((prev) =>
-          prev.map((d) =>
-            d.id === editingDestination.id ? { ...d, ...formData } : d
-          )
-        )
-        toast({
-          title: 'Sucesso',
-          description: 'Destino atualizado com sucesso.',
-        })
-      } else {
-        const newDestination: Destination = {
-          ...formData,
-          id: crypto.randomUUID(),
-          createdAt: new Date(),
-        }
-        setDestinations((prev) => [newDestination, ...prev])
-        toast({
-          title: 'Adicionado!',
-          description: `${formData.name} foi adicionado à sua lista.`,
-        })
-      }
-
-      handleOpenChange(false)
-    },
-    [editingDestination, formData, toast, handleOpenChange]
-  )
-
-  const handleDelete = useCallback(
-    (id: string) => {
-      const destination = destinations.find((d) => d.id === id)
-      setDestinations((prev) => prev.filter((d) => d.id !== id))
-      toast({
-        title: 'Removido',
-        description: destination
-          ? `${destination.name} foi removido da lista.`
-          : undefined,
-        variant: 'destructive',
-      })
-    },
-    [destinations, toast]
-  )
-
-  const handleInputChange = useCallback(
-    (field: keyof FormData) =>
-      (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        setFormData((prev) => ({ ...prev, [field]: e.target.value }))
-      },
-    []
-  )
-
-  const destinationCount = useMemo(
-    () => destinations.length,
-    [destinations.length]
-  )
-
-  return (
-    <div className="container mx-auto max-w-7xl space-y-8 p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <div className="rounded-2xl bg-primary/10 p-3 text-primary">
-            <Heart className="h-8 w-8" fill="currentColor" />
-          </div>
-          <div>
-            <h1 className="font-display text-4xl font-extrabold tracking-tight">
-              Wishlist
-            </h1>
-            <p className="text-muted-foreground">
-              {destinationCount} {destinationCount === 1 ? 'lugar' : 'lugares'}{' '}
-              no seu radar
-            </p>
-          </div>
-        </div>
-
-        <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-          <DialogTrigger>
-            <Button
-              size="lg"
-              className="rounded-full shadow-md transition-all hover:scale-105 cursor-pointer"
-            >
-              <Plus className="mr-2 h-5 w-5" /> Adicionar Destino
-            </Button>
-          </DialogTrigger>
-
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingDestination ? 'Editar Destino' : 'Novo Destino'}
-              </DialogTitle>
-            </DialogHeader>
-
-            <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome</Label>
-                  <Input
-                    id="name"
-                    required
-                    value={formData.name}
-                    onChange={handleInputChange('name')}
-                    placeholder="Ex: Paris"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="country">País</Label>
-                  <Input
-                    id="country"
-                    required
-                    value={formData.country}
-                    onChange={handleInputChange('country')}
-                    placeholder="Ex: França"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="imageUrl">URL da Imagem</Label>
-                <Input
-                  id="imageUrl"
-                  type="url"
-                  placeholder="https://..."
-                  value={formData.imageUrl}
-                  onChange={handleInputChange('imageUrl')}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notas e Dicas</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={handleInputChange('notes')}
-                  placeholder="Adicione suas observações..."
-                  rows={3}
-                />
-              </div>
-
-              <Button type="submit" className="w-full cursor-pointer">
-                {editingDestination ? 'Atualizar Destino' : 'Adicionar à Lista'}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {destinationCount === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Heart className="h-16 w-16 text-muted-foreground/30 mb-4" />
-
-          <h2 className="text-2xl font-bold text-muted-foreground mb-2">
-            Nenhum destino ainda
-          </h2>
-
-          <p className="text-muted-foreground">
-            Comece adicionando seus destinos dos sonhos!
-          </p>
-        </div>
-      ) : (
-        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <AnimatePresence mode="popLayout">
-            {destinations.map((dest) => (
-              <DestinationCard
-                key={dest.id}
-                destination={dest}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
-            ))}
-          </AnimatePresence>
-        </ul>
-      )}
-    </div>
-  )
-}

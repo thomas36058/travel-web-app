@@ -4,7 +4,7 @@ export interface Destination {
   country: string;
   imageUrl: string;
   notes?: string;
-  createdAt: Date;
+  created_at: Date;
 }
 
 export interface Expense {

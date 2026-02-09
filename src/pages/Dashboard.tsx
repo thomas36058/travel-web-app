@@ -6,7 +6,6 @@ import UpcomingTrips from '../components/dashboard/UpcomingTrips';
 import WishlistPreview from '../components/dashboard/WishlistPreview';
 import { useTripStats } from '../hooks/useTripStats';
 import { useTrips } from '../hooks/useTrips';
-import { mockDestinations } from '../data/mockData';
 
 export default function Dashboard() {
   const { trips, loading } = useTrips();
@@ -67,7 +66,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <UpcomingTrips trips={trips} />
-        <WishlistPreview destinations={mockDestinations} />
+        <WishlistPreview />
       </div>
     </div>
   );
