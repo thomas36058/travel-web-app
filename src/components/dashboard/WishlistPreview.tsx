@@ -28,7 +28,7 @@ export default function WishlistPreview() {
     >
       <Header onNavigate={() => navigate('/wishlist')} />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         {destinations.length <= 0 ? (
           <EmptyState />
         ) : (
@@ -77,9 +77,9 @@ const DestinationCard = memo(({ destination }: { destination: Destination }) => 
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
-      className="w-full overflow-hidden rounded-xl shadow-sm"
+      className="w-full overflow-hidden rounded-xl shadow-md"
     >
-      <div className="p-3 flex flex-col justify-end">
+      <div className="p-3 flex flex-col justify-center items-center min-h-24">
         <h4 className="font-bold text-accent-foreground text-sm sm:text-base leading-tight truncate">
           {destination.name}
         </h4>

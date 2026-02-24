@@ -140,8 +140,8 @@ export default function Trips() {
               setFilter(v);
             }}
           >
-            <SelectTrigger className="w-40 h-full!">
-              <Filter className="mr-2 h-4 w-4" />
+            <SelectTrigger className="w-40" style={{ height: 'stretch' }}>
+              <Filter className="mr-2 w-4" />
 
               <SelectValue>
                 {filter === 'all' ? 'Todas' : STATUS_LABELS[filter]}

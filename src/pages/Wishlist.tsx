@@ -111,10 +111,7 @@ export default function Wishlist() {
 
         <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
           <DialogTrigger>
-            <Button
-              size="lg"
-              className="rounded-full shadow-md transition-all hover:scale-105 cursor-pointer"
-            >
+            <Button className="gap-2 cursor-pointer">
               <Plus className="mr-2 h-5 w-5" /> Adicionar Destino
             </Button>
           </DialogTrigger>

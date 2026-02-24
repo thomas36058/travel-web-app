@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useEffect, useState } from "react"
 import type { Expense, PlannedTrip } from "../types/travel"
 import { useTrips } from "./useTrips"
 import { supabase } from "../lib/supabase"
@@ -6,23 +6,33 @@ import { v4 as uuidv4 } from "uuid"
 
 export function useTripExpenses(trip: PlannedTrip | null) {
   const { refetch } = useTrips()
+  const [expenses, setExpenses] = useState<Expense[]>([])
 
-  const expenses = useMemo(() => trip?.expenses ?? [], [trip?.expenses])
+  useEffect(() => {
+    if (!trip) return
 
-  const totalExpenses = useMemo(
-    () => expenses.reduce((sum, e) => sum + e.amount, 0),
-    [expenses]
-  )
+    async function fetchExpenses() {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('expenses')
+        .eq('id', trip?.id)
+        .single()
 
-  const remaining = useMemo(
-    () => (trip?.budget ?? 0) - totalExpenses,
-    [trip?.budget, totalExpenses]
-  )
+      if (error) {
+        console.error("Erro ao buscar expenses:", error)
+        return
+      }
 
-  async function addExpense(
-    tripId: string,
-    data: Omit<Expense, 'id' | 'date'>
-  ) {
+      setExpenses(data.expenses ?? [])
+    }
+
+    fetchExpenses()
+  }, [trip])
+
+  const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
+  const remaining = (trip?.budget ?? 0) - totalExpenses
+
+  async function addExpense( tripId: string, data: Omit<Expense, 'id' | 'date'> ) {
     if (!trip) throw new Error('Trip is null in addExpense')
 
     const newExpense: Expense = {
@@ -40,6 +50,7 @@ export function useTripExpenses(trip: PlannedTrip | null) {
 
     if (error) throw error
 
+    setExpenses(updatedExpenses)
     await refetch()
   }
 
@@ -55,6 +66,7 @@ export function useTripExpenses(trip: PlannedTrip | null) {
 
     if (error) throw error
 
+    setExpenses(updatedExpenses)
     await refetch()
   }
 
